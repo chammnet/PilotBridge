@@ -65,21 +65,32 @@ Roadcraft's input-mode switching.
 - After raw mode, every knob tick and every button arrives on if2:
   - Knob:   02 F3 02 <dir> <id> 01 ...   one report per tick.
       id: 01 = big knob, 04 = outer ring, 02 = top small knob
-      dir: 01 / 02. Mostly 02 = CCW, 01 = CW, but two runs disagreed ->
-      UNCONFIRMED, retest with one direction only.
+      dir: 01 = CW, 02 = CCW (confirmed: CW-only test on big + top knob).
   - Button: 02 F3 03 <01 down|00 up> b4 b5 b6 b7 ...   one bit per control:
       b5: btn1=10 btn2=20 btn3=80 btn4=40 btn5=01 btn6=02 btn7=08 btn8=04
       b6: d-pad up=02 down=08 left=01 right=04
       b7: top knob press=01
       b4: big knob press=20, big knob center button=10,
-          top touch up=01 down=02 left=08 right=04 (touch is twitchy; less sure)
+          top touch up=01 down=02 left=08 right=04 (from the clean run)
     (Side button numbers refer to Craig's labeled diagram.)
 - With the XPPen app running, each touch press is followed by four
-  02 B4 05 01 02 xx reports -> likely replies to the app driving haptics.
-  Not seen with the app closed.
-- UNTESTED: stick reports after raw mode. Do not assume unchanged until seen.
-- Top small knob is hard to turn without nudging the stick -> configurable
-  deadzone required; optionally suppress small stick input while a knob turns.
+  02 B4 05 01 02 xx reports (xx cycles 01 02 08 04 = the touch direction bits).
+  Not seen with the app closed. NOT haptics: haptics work with the app closed.
+  Meaning unknown.
+- Stick reports are unchanged in raw mode (confirmed 2026-10-25).
+- Crosstalk goes both ways:
+  - turning the top small knob nudges the stick -> configurable stick deadzone;
+  - moving the stick produced 2 stray single big-knob ticks (dir 01) -> filter
+    isolated knob ticks while the stick is deflected (configurable).
+
+## Haptics (open question)
+- The device buzzes on its own (firmware) for knob ticks and top touches, with
+  the XPPen app closed. All buzzes feel identical.
+- Unknown whether the host can trigger a buzz. Idea: map game rumble (vgamepad
+  X360 notification callback: large/small motor) to buzz pulses.
+- To investigate: if the XPPen app has a haptic setting/test, capture its
+  host->device traffic with USBPcap and replay ONLY those exact commands.
+  Never fuzz unknown vendor commands (could write device flash).
 
 ## Phase 1: probe (done for the joystick)
 - Use a USB-C cable (not Bluetooth) for probing.
@@ -102,4 +113,7 @@ Roadcraft's input-mode switching.
   virtual stick; dials (relative encoders) -> other axes as rate control
   (spin speed = axis value, decaying back to center when idle).
 - Deadzone, response curve, and a hotkey to toggle the bridge on/off.
-- Config file for mappings; tray app or console app TBD.
+- Config file for mappings from day one; one profile per game (Roadcraft first).
+- Later: GUI that edits profiles, with our OWN simple SVG diagram of the device
+  (do not commit XPPen's product render to this public repo). Mock up layouts
+  for Craig to compare before building. UI must be DPI-correct (4K @ 150%).
