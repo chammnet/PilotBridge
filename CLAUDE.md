@@ -33,8 +33,27 @@ Pilot Pro's raw HID input and drives a virtual Xbox 360 controller.
   proportional X/Y data to the host.
 - Open question: is proportional data in every report, or only after the XPPen
   app/driver sends an enable/mode-switch command (e.g. when calibration opens)?
+  ANSWERED 2026-10-25: proportional data is sent with the XPPen app fully closed.
+  No mode switch needed.
 
-## Phase 1: probe (next step)
+## Device facts (from probe, USB-C, XPPen app closed, 2026-10-25)
+- VID 0x28BD ("Hanvon ugee"), PID 0x0203, product "Pilot Pro".
+- HID interfaces: if0 = 2x Mouse (01/02) + Keyboard (01/06); if1 = Digitizer Pen
+  (0D/02); if2 = Vendor-defined (FF0A/01).
+- All open with hidapi, but Windows refuses reads on mouse, keyboard AND the pen
+  digitizer (OS-reserved). Only if2 (vendor) is readable -> the bridge reads if2.
+- Joystick report on if2, 12 bytes:
+    02 F3 01 01  XL XH  YL YH  00 00 00 00
+  bytes 0-3 constant header (02 = report ID); X = int16 LE bytes 4-5,
+  Y = int16 LE bytes 6-7. Range about -512..+511, round gate (max radius ~513).
+  +X = right, +Y = up (same sign convention as XInput, no inversion needed).
+  ~200 reports/s while moving; on release jumps straight to exactly 0,0.
+- Also seen on if2, stick untouched: 02 F2 01 64 01 50 00 00 00 00 00 00
+  (meaning unknown; 0x64 = 100, maybe battery/status).
+- Not yet tested: dials and buttons. They may arrive as keystrokes on the
+  keyboard collection (unreadable), which would change the Phase 2 dial plan.
+
+## Phase 1: probe (done for the joystick)
 - Use a USB-C cable (not Bluetooth) for probing.
 - Write `probe.py`:
   - list all HID interfaces (VID, PID, usage page, usage, interface number, path)
