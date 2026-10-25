@@ -9,9 +9,11 @@ Usage:
     python probe.py --list              list interfaces and exit
     python probe.py                     dump reports until Ctrl+C
     python probe.py --seconds 20        dump for 20 seconds
-    python probe.py --log logs\a.txt    also write output to a file
+    python probe.py --log logs\a.txt    also append output to a file
+    python probe.py --all               print identical repeats too
+    python probe.py --init              send the raw-mode switch first
 
-Read-only: this never sends anything to the device.
+Read-only unless --init is given.
 """
 
 import argparse
@@ -23,6 +25,12 @@ import hid
 
 XPPEN_VID = 0x28BD
 PILOT_PRO_PID = 0x0203
+
+# "Switch to raw reporting" command the Linux hid-uclogic driver sends to
+# interface 2 of UGEE v2 / XP-Pen tablets (uclogic_ugee_v2_probe_arr). The
+# Pilot Pro isn't on Linux's list, but uses the same report framing. Padded
+# to the vendor interface's declared output report: ID 0x02 + 19 bytes.
+RAW_MODE_CMD = [0x02, 0xB0, 0x04] + [0x00] * 17
 
 # Names for the usage pages/usages this device is known to expose, so the
 # output says "Mouse" instead of making you look up 0x01/0x02.
@@ -106,13 +114,24 @@ def list_interfaces(interfaces, out):
         out.line("      path:    %s" % d["path"].decode(errors="replace"))
 
 
-def open_interfaces(interfaces, out):
+def send_raw_mode(dev, out):
+    out.line("  sending raw-mode switch: %s" % " ".join("%02X" % b for b in RAW_MODE_CMD))
+    n = dev.write(RAW_MODE_CMD)
+    if n == len(RAW_MODE_CMD):
+        out.line("  sent %d bytes" % n)
+    else:
+        out.line("  write returned %d (expected %d): %s" % (n, len(RAW_MODE_CMD), dev.error()))
+
+
+def open_interfaces(interfaces, init, out):
     """Open each interface non-blocking; report (not raise) failures."""
     opened = []
     for d in interfaces:
         dev = hid.device()
         try:
             dev.open_path(d["path"])
+            if init and d["usage_page"] >= 0xFF00:
+                send_raw_mode(dev, out)
             dev.set_nonblocking(1)
         except (OSError, IOError) as e:
             # Expected for keyboard/mouse collections: Windows owns them
@@ -124,7 +143,7 @@ def open_interfaces(interfaces, out):
     return opened
 
 
-def dump(opened, seconds, out):
+def dump(opened, seconds, show_all, out):
     start = time.monotonic()
     out.line()
     out.line("Reading. Move the joystick, turn the dials, press buttons. Ctrl+C to stop.")
@@ -148,7 +167,9 @@ def dump(opened, seconds, out):
                     continue
                 got_any = True
                 o["count"] += 1
-                if data == o["last"]:
+                # Repeats are noise for the stick but real events for the
+                # dials: three clicks the same way are three identical reports.
+                if data == o["last"] and not show_all:
                     continue
                 t = time.monotonic() - start
                 hexed = " ".join("%02X" % b for b in data)
@@ -173,10 +194,16 @@ def main():
     p.add_argument("--list", action="store_true", help="list interfaces and exit")
     p.add_argument("--seconds", type=float, help="stop after this many seconds")
     p.add_argument("--log", help="also append output to this file")
+    p.add_argument("--all", action="store_true",
+                   help="print every report, including identical repeats")
+    p.add_argument("--init", action="store_true",
+                   help="send the raw-mode switch to the vendor interface first")
     args = p.parse_args()
 
     out = Output(args.log)
     try:
+        # Log files are appended to, so mark where each run starts.
+        out.line("=== probe run %s ===" % time.strftime("%Y-%m-%d %H:%M:%S"))
         interfaces = find_interfaces(XPPEN_VID, PILOT_PRO_PID)
         if not interfaces:
             out.line("Pilot Pro (%04X:%04X) not found. Plugged in over USB-C?" % (
@@ -187,11 +214,11 @@ def main():
             return 0
         out.line()
         out.line("Opening interfaces:")
-        opened = open_interfaces(interfaces, out)
+        opened = open_interfaces(interfaces, args.init, out)
         if not opened:
             out.line("Nothing could be opened.")
             return 1
-        dump(opened, args.seconds, out)
+        dump(opened, args.seconds, args.all, out)
         for o in opened:
             o["dev"].close()
         return 0

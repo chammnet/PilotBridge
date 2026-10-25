@@ -48,10 +48,38 @@ Pilot Pro's raw HID input and drives a virtual Xbox 360 controller.
   Y = int16 LE bytes 6-7. Range about -512..+511, round gate (max radius ~513).
   +X = right, +Y = up (same sign convention as XInput, no inversion needed).
   ~200 reports/s while moving; on release jumps straight to exactly 0,0.
-- Also seen on if2, stick untouched: 02 F2 01 64 01 50 00 00 00 00 00 00
-  (meaning unknown; 0x64 = 100, maybe battery/status).
-- Not yet tested: dials and buttons. They may arrive as keystrokes on the
-  keyboard collection (unreadable), which would change the Phase 2 dial plan.
+- Every ~10.3 s on if2: 02 F2 01 64 01 50 00 00 00 00 00 00. Linux hid-uclogic
+  treats subreport 0xF2 as battery, so 0x64 is probably battery = 100%.
+- Without raw mode, knobs send only 1-2 reports per 10 ticks on if2 and buttons
+  send nothing there (the XPPen app is what turns them into keystrokes).
+
+## Raw mode (decided 2026-10-25: the bridge owns ALL input, XPPen app closed)
+Reason: mixing keyboard (XPPen app keystrokes) and gamepad input would confuse
+Roadcraft's input-mode switching.
+- Send output report on if2: 02 B0 04 + 17 x 00 (report ID 0x02 + 19 bytes, the
+  size the if2 descriptor declares). Same magic Linux hid-uclogic sends to UGEE v2
+  / XP-Pen tablets (uclogic_ugee_v2_probe_arr). Device acks with input report
+  02 B1 04. `probe.py --init` does this. Assumed to reset on unplug (unverified).
+- if2 descriptor: Input ID 02 = 11 bytes, Output ID 02 = 19 bytes. No features.
+- Works whether or not the XPPen app is running (app does not open exclusively).
+- After raw mode, every knob tick and every button arrives on if2:
+  - Knob:   02 F3 02 <dir> <id> 01 ...   one report per tick.
+      id: 01 = big knob, 04 = outer ring, 02 = top small knob
+      dir: 01 / 02. Mostly 02 = CCW, 01 = CW, but two runs disagreed ->
+      UNCONFIRMED, retest with one direction only.
+  - Button: 02 F3 03 <01 down|00 up> b4 b5 b6 b7 ...   one bit per control:
+      b5: btn1=10 btn2=20 btn3=80 btn4=40 btn5=01 btn6=02 btn7=08 btn8=04
+      b6: d-pad up=02 down=08 left=01 right=04
+      b7: top knob press=01
+      b4: big knob press=20, big knob center button=10,
+          top touch up=01 down=02 left=08 right=04 (touch is twitchy; less sure)
+    (Side button numbers refer to Craig's labeled diagram.)
+- With the XPPen app running, each touch press is followed by four
+  02 B4 05 01 02 xx reports -> likely replies to the app driving haptics.
+  Not seen with the app closed.
+- UNTESTED: stick reports after raw mode. Do not assume unchanged until seen.
+- Top small knob is hard to turn without nudging the stick -> configurable
+  deadzone required; optionally suppress small stick input while a knob turns.
 
 ## Phase 1: probe (done for the joystick)
 - Use a USB-C cable (not Bluetooth) for probing.
