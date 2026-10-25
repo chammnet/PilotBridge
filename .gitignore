@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Probe output / USB captures (may contain device serials)
+*.pcap
+*.pcapng
+captures/
+logs/
+
+# Editor / OS
+.vscode/
+Thumbs.db
+desktop.ini
