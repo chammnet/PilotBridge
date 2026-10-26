@@ -70,6 +70,12 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
   fast 14.9 ticks/s. Gaps vary 36-66% even when "steady"; fast has re-grip
   pauses (the knob tilts around the stick and slips if spun jog-style), so
   fast will always be uneven. Medium-fast was jog-style and steadiest.
+- Each knob feels different, so defaults per knob will differ:
+  - SmallKnob: one finger; fast turning = big surges then re-seating fingers.
+  - LargeKnob: needs two fingers; much lower top speed.
+  - DialRing: has momentum; can spin very fast and stay smooth at high speed.
+- GUI plan: include a guided calibration (the --calibrate flow) so each user
+  defines their own slow/fast per knob and the settings are derived from it.
 - Bounce, old engine (avg 2, decay as soon as a tick is late) vs current:
   medium 36% -> 18%, medium-fast 30% -> 19%, fast 42% -> 28%.
 
