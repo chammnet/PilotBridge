@@ -1,0 +1,76 @@
+// Help text for every profile setting. The GUI shows "_name" next to the
+// "name" input (the (?) icon). Each setting is listed with its default value,
+// so this file is also the reference for defaults.
+//
+// Kept honest by SettingsHelpTests: every setting in code must have an entry
+// here, and the default listed here must match the default in code.
+{
+  "profile": {
+    "formatVersion": 1,
+    "_formatVersion": "Profile file format. Set by PilotBridge; don't change it by hand.",
+    "name": "Unnamed",
+    "_name": "Name shown in the profile list.",
+    "game": "",
+    "_game": "The game this profile is for.",
+    "description": "",
+    "_description": "What this profile does, for people you share it with.",
+    "author": "",
+    "_author": "Who made this profile."
+  },
+
+  "stick": {
+    "deadzone": 0.08,
+    "_deadzone": "How far the joystick must move before anything happens (0 to 1 of full travel). Raise it if the stick drifts or gets nudged while you turn a knob.",
+    "curve": 1.0,
+    "_curve": "Response curve. 1 = straight line. Above 1 gives finer control near center and faster movement near the edge.",
+    "antiDeadzone": 0.0,
+    "_antiDeadzone": "Smallest movement sent to the game (0 to 1). Games ignore small stick values; raise this until the smallest joystick movement does something in the game."
+  },
+
+  "axisTarget": {
+    "axis": "None",
+    "_axis": "Which gamepad axis this drives: LeftX, LeftY, RightX, RightY, LeftTrigger, RightTrigger, Triggers (both triggers as one axis: positive = RT, negative = LT), or None.",
+    "invert": false,
+    "_invert": "Reverse the direction."
+  },
+
+  "knob": {
+    "mode": "Rate",
+    "_mode": "Rate: turning speed drives the axis, which glides back to center when you stop. Position: each click moves the axis one step and it stays there. Buttons: each click taps a button.",
+    "axis": "None",
+    "_axis": "Which gamepad axis this knob drives (Rate and Position modes).",
+    "invert": false,
+    "_invert": "Reverse the direction: counter-clockwise becomes positive.",
+
+    "fullScaleTicksPerSecond": 15,
+    "_fullScaleTicksPerSecond": "Turning this fast (clicks per second) gives full deflection. Lower it for a knob that is hard to turn quickly; raise it if the knob is too sensitive.",
+    "minTicksPerSecond": 0.75,
+    "_minTicksPerSecond": "Turning slower than this (clicks per second) counts as stopped.",
+    "averageIntervals": 4,
+    "_averageIntervals": "Speed is averaged over this many gaps between clicks. Higher is smoother but reacts more slowly to speed changes.",
+    "graceFactor": 2.5,
+    "_graceFactor": "How late a click can be (in average gaps) before the knob counts as stopped. Higher rides through uneven turning; lower stops sooner.",
+    "smoothingSeconds": 0.25,
+    "_smoothingSeconds": "Extra output smoothing, in seconds. 0 = none. Higher is smoother but lags more.",
+    "ignoreSingleTicks": false,
+    "_ignoreSingleTicks": "Ignore a single isolated click (for example, from bumping the knob while using the joystick). Costs one click of delay when you start turning.",
+    "curve": 1.0,
+    "_curve": "Response curve. 1 = straight line. Above 1 gives finer control at slow turning speeds.",
+    "antiDeadzone": 0.0,
+    "_antiDeadzone": "Smallest output sent to the game (0 to 1). Raise it if slow turning does nothing in the game.",
+    "rampUpPerSecond": 4.0,
+    "_rampUpPerSecond": "How quickly the output may increase (full range per second). Lower = gentler starts.",
+    "rampDownPerSecond": 2.0,
+    "_rampDownPerSecond": "How quickly the output may decrease (full range per second). Lower = gentler stops, which helps keep loads from swinging.",
+
+    "stepPerTick": 0.02,
+    "_stepPerTick": "Position mode: how far each click moves the axis (0 to 1).",
+
+    "clockwise": "None",
+    "_clockwise": "Buttons mode: the gamepad button tapped by each clockwise click.",
+    "counterClockwise": "None",
+    "_counterClockwise": "Buttons mode: the gamepad button tapped by each counter-clockwise click.",
+    "pulseMilliseconds": 40,
+    "_pulseMilliseconds": "Buttons mode: how long each tap is held, in milliseconds. The gap between taps is the same."
+  }
+}

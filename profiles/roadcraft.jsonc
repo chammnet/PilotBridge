@@ -1,0 +1,52 @@
+// Setting explanations live in settings-help.jsonc; comments here are notes
+// about this profile only.
+{
+  "formatVersion": 1,
+  "name": "Roadcraft",
+  "game": "Roadcraft",
+  "description": "Starter mapping. Not tuned in-game yet: crane controls still to be laid out per machine.",
+  "author": "",
+
+  "stick": {
+    "x": { "axis": "LeftX" },
+    "y": { "axis": "LeftY" },
+    "deadzone": 0.08
+  },
+
+  "buttons": {
+    "Side1": "A",
+    "Side2": "B",
+    "Side3": "X",
+    "Side4": "Y",
+    "Side5": "LeftShoulder",
+    "Side6": "RightShoulder",
+    "Side7": "Back",
+    "Side8": "Start",
+    "DpadUp": "DPadUp",
+    "DpadDown": "DPadDown",
+    "DpadLeft": "DPadLeft",
+    "DpadRight": "DPadRight",
+    "LargeKnobPress": "LeftThumb",
+    "SmallKnobPress": "RightThumb"
+    // TouchUp is reserved: it selects the XPPen app's default layer.
+  },
+
+  "knobs": {
+    // Boom lateral on a crane truck; felt intuitive, maybe a bit sensitive.
+    "DialRing": {
+      "mode": "Rate",
+      "axis": "RightX"
+    },
+    // Boom forward on a crane truck; needed fast turning to register (first
+    // session). Candidate for per-knob calibration.
+    "LargeKnob": {
+      "mode": "Rate",
+      "axis": "RightY"
+    },
+    // Throttle (RT) / brake (LT) when driving.
+    "SmallKnob": {
+      "mode": "Rate",
+      "axis": "Triggers"
+    }
+  }
+}

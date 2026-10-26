@@ -40,8 +40,25 @@ public class ProfileTests
     [Fact]
     public void ShippedRoadcraftProfile_Loads()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.json");
+        var path = Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.jsonc");
         var p = Profile.Load(path);
         Assert.Equal("Roadcraft", p.Name);
+        Assert.Equal("Roadcraft", p.Game);
+        Assert.Equal(Profile.CurrentFormatVersion, p.FormatVersion);
+    }
+
+    [Fact]
+    public void Parse_NewerFormat_FailsWithAClearMessage()
+    {
+        var e = Assert.Throws<InvalidDataException>(() =>
+            Profile.Parse($$"""{ "formatVersion": {{Profile.CurrentFormatVersion + 1}} }"""));
+        Assert.Contains("newer", e.Message);
+    }
+
+    [Fact]
+    public void Parse_IgnoresUnderscoreKeys_SoSharedProfilesCanCarryNotes()
+    {
+        var p = Profile.Parse("""{ "name": "X", "_name": "a note", "stick": { "_deadzone": "note", "deadzone": 0.2 } }""");
+        Assert.Equal(0.2, p.Stick.Deadzone);
     }
 }

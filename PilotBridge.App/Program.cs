@@ -8,9 +8,9 @@ using PilotBridge.Core;
 //   PilotBridge.App --list
 //   PilotBridge.App --calibrate [DialRing|LargeKnob|SmallKnob]
 //   PilotBridge.App --replay recording.csv <knob> [profile.json]
-// Default profile: profiles\roadcraft.json next to the exe.
+// Default profile: profiles\roadcraft.jsonc next to the exe.
 
-var defaultProfile = Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.json");
+var defaultProfile = Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.jsonc");
 
 PilotKnob? ParseKnob(string name)
 {

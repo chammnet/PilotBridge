@@ -27,7 +27,8 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
     Thread.Sleep(1)) runs MappingEngine.Update and drives a virtual Xbox 360 pad
     via Nefarius.ViGEm.Client. Flags: [profile.json] --monitor --seconds N --list.
   - PilotBridge.Core.Tests: xUnit.
-- profiles/*.json: one per game, copied next to the exe. Comments allowed.
+- profiles/*.jsonc: one per game, copied next to the exe.
+- PilotBridge.Core/settings-help.jsonc: help text + defaults for every setting.
 - tools/probe/probe.py: the Python HID probe (hidapi), kept as a diagnostic tool.
   Run with the repo-root .venv: .venv\Scripts\python.exe tools\probe\probe.py
 - Output: Xbox 360 pad via ViGEmBus 1.22 (winget ViGEm.ViGEmBus). Roadcraft's
@@ -98,14 +99,18 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
   release only after N seconds idle (game prompts change while LB is held,
   so per-tick presses would flicker). Spec details before coding: delay,
   what counts as active, interaction with a manual press of the same button.
-- Config editing will be done in the GUI; Craig dislikes hand-editing JSON.
-  Format decision pending (Craig to confirm): rename profiles to .jsonc so
-  editors accept the // comments (loader unchanged), and put human text in
-  real fields (name, game, description, author; per-layer description) since
-  GUI saves drop comments in any format. Considered: TOML (readable but
-  clumsy for deep nesting), YAML (indentation pitfalls), JSON5 (weak .NET
-  support), XML (verbose), "_key" comment keys (lost on GUI save unless the
-  model carries them).
+- Profile format DECIDED (2026-10-25): JSONC (JSON + // comments), files
+  profiles/*.jsonc. Comments are for real notes only. Human text that must
+  survive GUI saves is data: formatVersion, name, game, description, author.
+  Loader rejects formatVersion newer than Profile.CurrentFormatVersion and
+  ignores unknown keys (so "_key" notes in shared profiles are harmless).
+- Setting help (Craig's "_key" pattern from his other app): ONE app-shipped
+  file, PilotBridge.Core/settings-help.jsonc, lists every setting with its
+  default and a sibling "_setting" help string, by section (profile, stick,
+  axisTarget, knob). The GUI's (?) icon shows SettingsHelp.Get(section, key).
+  Kept in one file (not copied into every profile) so shared profiles can't
+  carry stale help. SettingsHelpTests fail if a setting lacks help or a listed
+  default differs from code -> add help + default there for every new setting.
 - 8BitDo: the name in joy.cpl comes from the OEM registry entry for
   VID_045E&PID_028E written by the 8BitDo Pro 2 setup on Craig's PC. ViGEm
   uses Microsoft's inbox Xbox 360 driver; no 8BitDo driver needed anywhere,

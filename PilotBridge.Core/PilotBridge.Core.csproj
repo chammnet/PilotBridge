@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Help text for every setting; flows to the output of every project
+         that references Core (App, Tests, later the GUI). -->
+    <None Include="settings-help.jsonc" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="PilotBridge.Core.Tests" />
   </ItemGroup>
 

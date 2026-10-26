@@ -22,13 +22,13 @@ dotnet build PilotBridge.slnx
 PilotBridge.App\bin\Debug\net10.0\PilotBridge.App.exe --monitor
 ```
 
-- **Profile:** `profiles\roadcraft.json` is used by default. Pass another profile's path to use that instead.
+- **Profile:** `profiles\roadcraft.jsonc` is used by default. Pass another profile's path to use that instead.
 - **`--monitor`:** shows the virtual pad's live state.
 - **Stop:** Ctrl+C.
 
 ## Profiles
 
-A profile is a JSON file (comments allowed) that maps:
+A profile is a JSONC file (JSON that allows `//` comments) that maps:
 
 - the **joystick** to any stick axis or axes, with dead zone, response curve and invert;
 - every **button**, d-pad direction, knob press and touch direction to any gamepad button;
@@ -37,7 +37,7 @@ A profile is a JSON file (comments allowed) that maps:
   - **`Position`**: each tick moves the axis a step and it stays there;
   - **`Buttons`**: each tick taps a button.
 
-See [profiles/roadcraft.json](profiles/roadcraft.json) for every setting.
+Every setting, its default and what it does are listed in [settings-help.jsonc](PilotBridge.Core/settings-help.jsonc). See [profiles/roadcraft.jsonc](profiles/roadcraft.jsonc) for an example profile.
 
 ## Repository layout
 

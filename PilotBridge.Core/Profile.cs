@@ -4,17 +4,27 @@ using System.Text.Json.Serialization;
 namespace PilotBridge.Core;
 
 /// <summary>
-/// One game's mapping, loaded from a JSON file in profiles\. Every setting has
-/// a default, so a profile only needs to name what it changes.
+/// One game's mapping, loaded from a JSONC file (JSON with // comments) in
+/// profiles\. Every setting has a default, so a profile only needs to name
+/// what it changes. Profiles are meant to be shared: personal knob-feel
+/// calibration does not belong here. Help text for each setting lives in
+/// settings-help.jsonc, not in profiles.
 /// </summary>
 public sealed class Profile
 {
+    /// <summary>Bump when the format changes in a way older code can't read.</summary>
+    public const int CurrentFormatVersion = 1;
+
+    public int FormatVersion { get; set; } = CurrentFormatVersion;
     public string Name { get; set; } = "Unnamed";
+    public string Game { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string Author { get; set; } = "";
     public StickSettings Stick { get; set; } = new();
     public Dictionary<PilotButton, GamepadButton> Buttons { get; set; } = new();
     public Dictionary<PilotKnob, KnobSettings> Knobs { get; set; } = new();
 
-    private static readonly JsonSerializerOptions Options = new()
+    internal static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
@@ -24,9 +34,15 @@ public sealed class Profile
 
     public static Profile Load(string path) => Parse(File.ReadAllText(path));
 
-    public static Profile Parse(string json) =>
-        JsonSerializer.Deserialize<Profile>(json, Options)
-        ?? throw new InvalidDataException("Profile is empty.");
+    public static Profile Parse(string json)
+    {
+        var profile = JsonSerializer.Deserialize<Profile>(json, Options)
+            ?? throw new InvalidDataException("Profile is empty.");
+        if (profile.FormatVersion > CurrentFormatVersion)
+            throw new InvalidDataException(
+                $"Profile format {profile.FormatVersion} is newer than this version of PilotBridge understands ({CurrentFormatVersion}). Update PilotBridge.");
+        return profile;
+    }
 }
 
 public sealed class StickSettings
