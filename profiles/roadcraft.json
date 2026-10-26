@@ -52,12 +52,16 @@
       "rampUpPerSecond": 4.0,
       "rampDownPerSecond": 2.0
     },
-    // Each tick taps a shoulder button.
+    // Turning speed -> triggers: clockwise sweeps RT, counter-clockwise LT.
+    // (joy.cpl shows both triggers as one "Z axis"; games see them separately.)
+    // For taps instead: "mode": "Buttons", "clockwise": "RightShoulder",
+    // "counterClockwise": "LeftShoulder", "pulseMilliseconds": 40
     "TopKnob": {
-      "mode": "Buttons",
-      "clockwise": "RightShoulder",
-      "counterClockwise": "LeftShoulder",
-      "pulseMilliseconds": 40
+      "mode": "Rate",
+      "axis": "Triggers",
+      "fullScaleTicksPerSecond": 10,
+      "rampUpPerSecond": 4.0,
+      "rampDownPerSecond": 2.0
     }
   }
 }
