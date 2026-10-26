@@ -1,12 +1,52 @@
 # pilot-to-joystick
 
-A user-mode bridge that turns the XPPen Pilot Pro editing console (joystick, dials, buttons) into a virtual Xbox 360 controller, so it can be used as an analog crane controller in Roadcraft.
+Turns the XPPen Pilot Pro editing console (joystick, three knobs, buttons, d-pad) into a fully configurable virtual Xbox 360 controller. The first target is analog crane control in Roadcraft, where turning a knob faster moves the crane faster, the same way a gamepad stick does.
 
-Windows doesn't see the Pilot Pro as a game controller. This project reads its raw HID input with Python (`hidapi`) and drives a virtual gamepad through ViGEmBus (`vgamepad`). No kernel driver.
+Windows doesn't see the Pilot Pro as a game controller. PilotBridge reads its raw HID input and drives a virtual Xbox 360 pad through ViGEmBus. No custom kernel driver, and the XPPen app isn't needed (close it while using this).
 
 ## Status
 
-Early: Phase 1 (probing the device's HID reports) hasn't started yet. See [CLAUDE.md](CLAUDE.md) for the design notes and plan.
+Early and untested in-game. The device protocol is worked out, and the mapping engine is unit-tested. The Roadcraft profile is a starting point that still needs tuning.
+
+## Requirements
+
+- Windows 10/11 x64
+- [ViGEmBus](https://github.com/nefarius/ViGEmBus/releases) 1.22 (`winget install ViGEm.ViGEmBus`)
+- Pilot Pro connected over USB
+- To build: .NET 10 SDK
+
+## Run
+
+```
+dotnet build PilotBridge.slnx
+PilotBridge.App\bin\Debug\net10.0\PilotBridge.App.exe --monitor
+```
+
+- **Profile:** `profiles\roadcraft.json` is used by default. Pass another profile's path to use that instead.
+- **`--monitor`:** shows the virtual pad's live state.
+- **Stop:** Ctrl+C.
+
+## Profiles
+
+A profile is a JSON file (comments allowed) that maps:
+
+- the **joystick** to any stick axis or axes, with dead zone, response curve and invert;
+- every **button**, d-pad direction, knob press and touch direction to any gamepad button;
+- each **knob** to an axis or to buttons:
+  - **`Rate`**: turning speed drives the axis, which glides back to center when you stop turning;
+  - **`Position`**: each tick moves the axis a step and it stays there;
+  - **`Buttons`**: each tick taps a button.
+
+See [profiles/roadcraft.json](profiles/roadcraft.json) for every setting.
+
+## Repository layout
+
+- `PilotBridge.Core`: protocol parser and mapping engine (no device needed; unit-tested)
+- `PilotBridge.App`: the console app (HidSharp + ViGEm)
+- `PilotBridge.Core.Tests`: xUnit tests
+- `profiles`: game profiles
+- `tools/probe`: the Python HID probe used to work out the protocol
+- [CLAUDE.md](CLAUDE.md): design notes and the reverse-engineered protocol
 
 ## License
 

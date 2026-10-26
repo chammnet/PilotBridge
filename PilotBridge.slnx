@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="PilotBridge.App/PilotBridge.App.csproj" />
+  <Project Path="PilotBridge.Core.Tests/PilotBridge.Core.Tests.csproj" />
+  <Project Path="PilotBridge.Core/PilotBridge.Core.csproj" />
+</Solution>

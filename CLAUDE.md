@@ -1,8 +1,8 @@
-# Pilot Pro -> Virtual Gamepad Bridge (Roadcraft crane control)
+# Pilot Pro -> Virtual Gamepad Bridge (PilotBridge)
 
 ## Goal
-Use the XPPen Pilot Pro editing console (joystick + 3 dials + buttons) as an analog
-crane controller in the game Roadcraft (Steam). The device is not seen by Windows as
+Use the XPPen Pilot Pro editing console (joystick + 3 dials + buttons) as a fully
+configurable game controller. First target: analog crane control in Roadcraft (Steam). The device is not seen by Windows as
 a game controller. Build a user-mode bridge (NOT a kernel driver) that reads the
 Pilot Pro's raw HID input and drives a virtual Xbox 360 controller.
 
@@ -15,16 +15,53 @@ Pilot Pro's raw HID input and drives a virtual Xbox 360 controller.
 - Repo: github.com/chammnet/pilot-to-joystick (public, AGPL-3.0), local clone at
   N:\github\chammnet\pilot-to-joystick. Public repo: no secrets or personal data in commits.
 
-## Architecture (planned)
-1. READ: Python + `hidapi` (pip install hidapi). Enumerate HID devices, find the
-   Pilot Pro by VID/PID, open the right interface (it likely exposes several:
-   keyboard-emulation, consumer control, vendor-defined). Dump raw reports.
-2. EMIT: ViGEmBus driver + `vgamepad` Python package -> virtual Xbox 360 pad.
-   Xbox 360 rather than vJoy/DirectInput, because Roadcraft's generic joystick/axis
-   support is poor (axis inputs reportedly ignored in custom binding; game is
-   built around the 360 controller). ViGEmBus is officially retired but still works.
-3. BRIDGE: loop reading reports -> scale -> set virtual stick axes / buttons.
-   Optional later: HidHide to hide the physical device from the game.
+## Architecture (C# / .NET 10, decided 2026-10-25)
+Python was for discovering the protocol; the product is C# so it ships as a
+self-contained exe (no Python/.NET install for users) with a real Windows GUI later.
+- PilotBridge.slnx, flat layout like LessonRecorder:
+  - PilotBridge.Core: device-independent and unit-tested. PilotPro.cs (protocol
+    constants + report parser), Profile.cs (JSON profile model), MappingEngine.cs,
+    StickMapper.cs, KnobAxis.cs (knob -> axis / buttons).
+  - PilotBridge.App: console exe. HidSharp opens the vendor interface (if2), sends
+    raw mode, reader thread timestamps reports; main loop (~580 Hz with
+    Thread.Sleep(1)) runs MappingEngine.Update and drives a virtual Xbox 360 pad
+    via Nefarius.ViGEm.Client. Flags: [profile.json] --monitor --seconds N --list.
+  - PilotBridge.Core.Tests: xUnit.
+- profiles/*.json: one per game, copied next to the exe. Comments allowed.
+- tools/probe/probe.py: the Python HID probe (hidapi), kept as a diagnostic tool.
+  Run with the repo-root .venv: .venv\Scripts\python.exe tools\probe\probe.py
+- Output: Xbox 360 pad via ViGEmBus 1.22 (winget ViGEm.ViGEmBus). Roadcraft's
+  generic joystick support is poor; it's built around the 360 pad. ViGEmBus is
+  retired upstream but works. Users must install it once (kernel driver).
+- Library licenses all permissive (HidSharp Apache-2.0, ViGEm client MIT,
+  ViGEmBus BSD-3) - keep it that way (see owner's commercial-option note).
+
+## Mapping model
+- Stick: radial deadzone, curve exponent, antiDeadzone; X and Y each go to any
+  axis (or None) with invert. Several sources on one axis add, then clamp.
+- Axes: LeftX LeftY RightX RightY LeftTrigger RightTrigger, plus Triggers
+  (one bipolar axis: + = RT, - = LT).
+- Buttons/d-pad/knob presses/touch -> any gamepad button.
+- Knobs: Rate | Position | Buttons.
+  - Rate: speed = 1 / (average of last AverageIntervals tick intervals), so steady
+    turning gives a steady value at any speed (no per-tick sawtooth). When a tick
+    is overdue, speed = min(speed, 1/time-since-last-tick) -> glides down; below
+    MinTicksPerSecond -> 0. First tick of a run = MinTicksPerSecond (or nothing
+    with IgnoreSingleTicks). A reversal starts a new run. Output = shaped
+    speed/FullScale, then slew-limited: RampUp while growing, RampDown while
+    shrinking; a sign reversal returns to 0 at RampDown first.
+  - Position: each tick +/- StepPerTick, stays (triggers clamp at 0..1).
+  - Buttons: each tick = one tap (hold PulseMs, release PulseMs), queue max 10.
+- antiDeadzone exists because games ignore small stick values; tune in-game.
+
+## Not done yet / ideas
+- 8-way digital stick mode with threshold (Craig wants it).
+- Crosstalk filter tied to stick deflection (currently only IgnoreSingleTicks).
+- Device unplug/replug: app exits; should wait and re-send raw mode.
+- Top touch knob: Craig thinks it is designed for DOUBLE TAP (single taps were
+  unreliable). Probe double taps to see what they report.
+- Hotkey to toggle the bridge; tray app; GUI profile editor.
+- Roadcraft profile is a STARTER, untested in-game.
 
 ## What we know so far
 - Marketing and most app settings describe the joystick as 4/8-way digital.
@@ -73,10 +110,11 @@ Roadcraft's input-mode switching.
       b4: big knob press=20, big knob center button=10,
           top touch up=01 down=02 left=08 right=04 (from the clean run)
     (Side button numbers refer to Craig's labeled diagram.)
-- With the XPPen app running, each touch press is followed by four
-  02 B4 05 01 02 xx reports (xx cycles 01 02 08 04 = the touch direction bits).
-  Not seen with the app closed. NOT haptics: haptics work with the app closed.
-  Meaning unknown.
+- 02 B4 05 01 02 xx reports, four at a time (xx cycles 01 02 08 04 = the touch
+  direction bits). Seen after touch presses with the XPPen app running; NOT seen
+  in the probe runs with the app closed; but under PilotBridge.App (app closed,
+  device untouched) they arrive about once a second. Not haptics. Meaning
+  unknown; the parser returns UnknownReport and the engine ignores them.
 - Stick reports are unchanged in raw mode (confirmed 2026-10-25).
 - Crosstalk goes both ways:
   - turning the top small knob nudges the stick -> configurable stick deadzone;
@@ -92,28 +130,11 @@ Roadcraft's input-mode switching.
   host->device traffic with USBPcap and replay ONLY those exact commands.
   Never fuzz unknown vendor commands (could write device flash).
 
-## Phase 1: probe (done for the joystick)
-- Use a USB-C cable (not Bluetooth) for probing.
-- Write `probe.py`:
-  - list all HID interfaces (VID, PID, usage page, usage, interface number, path)
-  - open the Pilot Pro interfaces (vendor-defined usage page 0xFF00+ is the prime
-    suspect) and print each report as hex, only when it changes
-- Run the probe in three states and compare:
-  a) XPPen app fully closed (check tray + services)
-  b) XPPen app open, normal
-  c) XPPen app open, on the calibration screen
-- If proportional data only shows up in (c): capture the host->device traffic with
-  USBPcap + Wireshark while opening calibration, find the mode-switch
-  (likely a feature report or output report), and replay it from Python.
-- Watch for: the XPPen driver holding the device exclusively; the stick-circle
-  motion bleeding into the large dial (reported crosstalk).
-
-## Phase 2+: mapping (later)
-- Roadcraft cranes use two sticks; the Pilot Pro has one. Plan: joystick -> one
-  virtual stick; dials (relative encoders) -> other axes as rate control
-  (spin speed = axis value, decaying back to center when idle).
-- Deadzone, response curve, and a hotkey to toggle the bridge on/off.
-- Config file for mappings from day one; one profile per game (Roadcraft first).
-- Later: GUI that edits profiles, with our OWN simple SVG diagram of the device
-  (do not commit XPPen's product render to this public repo). Mock up layouts
-  for Craig to compare before building. UI must be DPI-correct (4K @ 150%).
+## History
+- Phase 1 (2026-10-25): Python probe found the vendor interface, the stick
+  format, then the raw-mode switch, knob and button layouts.
+- Phase 2 (2026-10-25): C# solution, mapping engine, starter Roadcraft profile.
+- Later: GUI that edits profiles, with our OWN SVG drawing of the device (drawn
+  from the shape/proportions of XPPen's render, not traced; no XPPen logo).
+  Mock up layouts for Craig to compare before building. UI must be DPI-correct
+  (4K @ 150%).
