@@ -62,6 +62,40 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
   profile. Which ones a GUI exposes is undecided (Craig suspects ramp-down
   may not make sense to expose).
 
+## First Roadcraft session (2026-10-25) and resulting plans
+- Game sees the pad and shows Xbox prompts. Mapping in the starter profile is
+  wrong for the game; it's configuration, the raw values are right.
+- Roadcraft controls seen (crane truck): Boom Forward = RS up/down, Boom
+  Lateral = RS left/right, Boom Vertical = D-pad, Crane Control = LB (hold),
+  Crane Functions = RB, Camera Mode = B. Stationary crane: Tower Rotation =
+  LS left/right, Trolley = LB/RB, hook = D-pad up/down, rails = LT/RT, Cycle
+  Target = X. Machines differ but share a lot; the game's own bindings are
+  also very configurable.
+- DialRing -> boom lateral felt intuitive but a bit too sensitive. LargeKnob
+  needed fast turning to register at all (top speed below FullScale 15, plus
+  the game's dead zone) -> per-knob calibration needed soon.
+- Steering returns to center only while the vehicle moves (game behaviour).
+  Driving wants stick Y -> Triggers (up = RT throttle, down = LT brake).
+- Planned features (from Craig):
+  - Layers/modes in one profile (crane truck / stationary crane / harvester /
+    driving), switched by touch double-taps (down/left/right; up is XPPen's
+    layer key). Could also cycle so we're not limited to 3. Needs a probe of
+    what a double-tap reports.
+  - Sticky buttons: single press = latch on, double press = off (per button).
+    Alternative/also: a knob that holds a button (e.g. LB Crane Control)
+    automatically while it is turning.
+  - Knob "hold while turning" mode: hold button A while turning CW, B while
+    CCW, release when stopped - for digital game controls (D-pad boom
+    vertical / hook, LB/RB trolley). Reuses the Rate-mode turning detection.
+  - Import/export to share profiles. Keep JSON (nesting: profile > layers >
+    controls; comments already allowed); INI is too flat. Add formatVersion.
+    Split shareable GAME PROFILE from personal KNOB CALIBRATION (hand speed is
+    per user/device, not per game).
+- 8BitDo: the name in joy.cpl comes from the OEM registry entry for
+  VID_045E&PID_028E written by the 8BitDo Pro 2 setup on Craig's PC. ViGEm
+  uses Microsoft's inbox Xbox 360 driver; no 8BitDo driver needed anywhere,
+  and we never touch the 8BitDo driver or that registry entry.
+
 ## Calibration data (Craig, LargeKnob, 2026-10-25)
 - `--calibrate <knob>` records tick timestamps at 5 self-judged speeds to
   logs/calibration-*.csv; `--replay <csv> <knob> [profile]` scores a profile's
