@@ -12,8 +12,9 @@ Pilot Pro's raw HID input and drives a virtual Xbox 360 controller.
 - Prefers: non-destructive defaults, small testable steps, honest uncertainty.
 - Editor: VS Code with Gremlins Tracker. Keep source files plain ASCII
   (no em dashes, smart quotes, or other fancy Unicode).
-- Repo: github.com/chammnet/pilot-to-joystick (public, AGPL-3.0), local clone at
-  N:\github\chammnet\pilot-to-joystick. Public repo: no secrets or personal data in commits.
+- Repo: github.com/chammnet/PilotBridge (public, AGPL-3.0), local clone at
+  N:\github\chammnet\PilotBridge. Public repo: no secrets or personal data in commits.
+  (Renamed from pilot-to-joystick on 2026-10-25; GitHub redirects the old URL.)
 
 ## Architecture (C# / .NET 10, decided 2026-10-25)
 Python was for discovering the protocol; the product is C# so it ships as a

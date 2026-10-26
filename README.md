@@ -1,4 +1,4 @@
-# pilot-to-joystick
+# PilotBridge
 
 Turns the XPPen Pilot Pro editing console (joystick, three knobs, buttons, d-pad) into a fully configurable virtual Xbox 360 controller. The first target is analog crane control in Roadcraft, where turning a knob faster moves the crane faster, the same way a gamepad stick does.
 
