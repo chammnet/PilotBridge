@@ -1,10 +1,11 @@
-// Setting explanations live in settings-help.jsonc; comments here are notes
-// about this profile only.
+// The generic profile, used when no profile is given on the command line.
+// Setting explanations live in PilotBridge.Core/settings-help.jsonc; comments
+// here are notes about this profile only.
 {
   "formatVersion": 1,
-  "name": "Roadcraft",
-  "game": "Roadcraft",
-  "description": "Starter mapping. Not tuned in-game yet: crane controls still to be laid out per machine.",
+  "name": "Default",
+  "game": "",
+  "description": "Generic starting point: joystick on the left stick, knobs on the right stick and triggers, side buttons on the face and shoulder buttons. Copy it and adjust for your game.",
   "author": "",
 
   "stick": {
@@ -28,22 +29,20 @@
     "DpadRight": "DPadRight",
     "LargeKnobPress": "LeftThumb",
     "SmallKnobPress": "RightThumb"
-    // TouchUp is reserved: it selects the XPPen app's default layer.
+    // TouchUp is left unmapped: with the XPPen app running it selects the
+    // app's default layer.
   },
 
   "knobs": {
-    // Boom lateral on a crane truck; felt intuitive, maybe a bit sensitive.
     "DialRing": {
       "mode": "Rate",
       "axis": "RightX"
     },
-    // Boom forward on a crane truck; needed fast turning to register (first
-    // session). Candidate for per-knob calibration.
     "LargeKnob": {
       "mode": "Rate",
       "axis": "RightY"
     },
-    // Throttle (RT) / brake (LT) when driving.
+    // Clockwise = RT, counter-clockwise = LT (e.g. throttle / brake).
     "SmallKnob": {
       "mode": "Rate",
       "axis": "Triggers"

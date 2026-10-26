@@ -1,12 +1,12 @@
 # PilotBridge
 
-Turns the XPPen Pilot Pro editing console (joystick, three knobs, buttons, d-pad) into a fully configurable virtual Xbox 360 controller. The first target is analog crane control in Roadcraft, where turning a knob faster moves the crane faster, the same way a gamepad stick does.
+Turns the XPPen Pilot Pro editing console (joystick, three knobs, buttons, d-pad) into a fully configurable virtual Xbox 360 controller. Its knobs can act like analog sticks: turn faster and the axis moves further, so a game sees smooth, proportional input instead of key taps. Useful for anything with fine analog control, such as cranes, machinery or camera work.
 
 Windows doesn't see the Pilot Pro as a game controller. PilotBridge reads its raw HID input and drives a virtual Xbox 360 pad through ViGEmBus. No custom kernel driver, and the XPPen app isn't needed (close it while using this).
 
 ## Status
 
-Early and untested in-game. The device protocol is worked out, and the mapping engine is unit-tested. The Roadcraft profile is a starting point that still needs tuning.
+Early and untested in-game. The device protocol is worked out, and the mapping engine is unit-tested. The default profile is a generic starting point.
 
 ## Requirements
 
@@ -22,7 +22,7 @@ dotnet build PilotBridge.slnx
 PilotBridge.App\bin\Debug\net10.0\PilotBridge.App.exe --monitor
 ```
 
-- **Profile:** `profiles\roadcraft.jsonc` is used by default. Pass another profile's path to use that instead.
+- **Profile:** `profiles\default.jsonc` is used by default. Pass another profile's path to use that instead.
 - **`--monitor`:** shows the virtual pad's live state.
 - **Stop:** Ctrl+C.
 
@@ -37,7 +37,7 @@ A profile is a JSONC file (JSON that allows `//` comments) that maps:
   - **`Position`**: each tick moves the axis a step and it stays there;
   - **`Buttons`**: each tick taps a button.
 
-Every setting, its default and what it does are listed in [settings-help.jsonc](PilotBridge.Core/settings-help.jsonc). See [profiles/roadcraft.jsonc](profiles/roadcraft.jsonc) for an example profile.
+Every setting, its default and what it does are listed in [settings-help.jsonc](PilotBridge.Core/settings-help.jsonc). See [profiles/default.jsonc](profiles/default.jsonc) for an example profile.
 
 ## Repository layout
 
@@ -52,4 +52,4 @@ Every setting, its default and what it does are listed in [settings-help.jsonc](
 
 Licensed under [AGPL-3.0](LICENSE). Use it, fork it, learn from it - if you redistribute a modified version, the same license applies to your version too.
 
-No affiliation with XPPen or the makers of Roadcraft.
+Not affiliated with or endorsed by XPPen.

@@ -38,13 +38,16 @@ public class ProfileTests
     }
 
     [Fact]
-    public void ShippedRoadcraftProfile_Loads()
+    public void ShippedProfiles_AllLoad()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.jsonc");
-        var p = Profile.Load(path);
-        Assert.Equal("Roadcraft", p.Name);
-        Assert.Equal("Roadcraft", p.Game);
-        Assert.Equal(Profile.CurrentFormatVersion, p.FormatVersion);
+        var files = Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "profiles"), "*.jsonc");
+        Assert.Contains(files, f => Path.GetFileName(f) == "default.jsonc");
+        foreach (var file in files)
+        {
+            var p = Profile.Load(file);
+            Assert.Equal(Profile.CurrentFormatVersion, p.FormatVersion);
+            Assert.False(string.IsNullOrWhiteSpace(p.Description), $"{Path.GetFileName(file)} has no description");
+        }
     }
 
     [Fact]

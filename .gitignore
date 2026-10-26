@@ -21,3 +21,7 @@ bin/
 obj/
 .vs/
 *.user
+
+# Personal, never published: local Claude notes and game-specific profiles
+CLAUDE.local.md
+profiles/local/

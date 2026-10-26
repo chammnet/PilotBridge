@@ -2,8 +2,8 @@
 
 ## Goal
 Use the XPPen Pilot Pro editing console (joystick + 3 dials + buttons) as a fully
-configurable game controller. First target: analog crane control in Roadcraft (Steam). The device is not seen by Windows as
-a game controller. Build a user-mode bridge (NOT a kernel driver) that reads the
+configurable game controller for any game that supports an Xbox 360 pad. The
+device is not seen by Windows as a game controller. Build a user-mode bridge (NOT a kernel driver) that reads the
 Pilot Pro's raw HID input and drives a virtual Xbox 360 controller.
 
 ## Owner context
@@ -28,12 +28,13 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
     Thread.Sleep(1)) runs MappingEngine.Update and drives a virtual Xbox 360 pad
     via Nefarius.ViGEm.Client. Flags: [profile.json] --monitor --seconds N --list.
   - PilotBridge.Core.Tests: xUnit.
-- profiles/*.jsonc: one per game, copied next to the exe.
+- profiles/*.jsonc: shareable profiles, copied next to the exe; default.jsonc
+  is the generic one used when no profile is given.
 - PilotBridge.Core/settings-help.jsonc: help text + defaults for every setting.
 - tools/probe/probe.py: the Python HID probe (hidapi), kept as a diagnostic tool.
   Run with the repo-root .venv: .venv\Scripts\python.exe tools\probe\probe.py
-- Output: Xbox 360 pad via ViGEmBus 1.22 (winget ViGEm.ViGEmBus). Roadcraft's
-  generic joystick support is poor; it's built around the 360 pad. ViGEmBus is
+- Output: Xbox 360 pad via ViGEmBus 1.22 (winget ViGEm.ViGEmBus). Many games
+  handle generic joysticks poorly but fully support the 360 pad. ViGEmBus is
   retired upstream but works. Users must install it once (kernel driver).
 - Library licenses all permissive (HidSharp Apache-2.0, ViGEm client MIT,
   ViGEmBus BSD-3) - keep it that way (see owner's commercial-option note).
@@ -64,31 +65,27 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
   profile. Which ones a GUI exposes is undecided (Craig suspects ramp-down
   may not make sense to expose).
 
-## First Roadcraft session (2026-10-25) and resulting plans
-- Game sees the pad and shows Xbox prompts. Mapping in the starter profile is
-  wrong for the game; it's configuration, the raw values are right.
-- Roadcraft controls seen (crane truck): Boom Forward = RS up/down, Boom
-  Lateral = RS left/right, Boom Vertical = D-pad, Crane Control = LB (hold),
-  Crane Functions = RB, Camera Mode = B. Stationary crane: Tower Rotation =
-  LS left/right, Trolley = LB/RB, hook = D-pad up/down, rails = LT/RT, Cycle
-  Target = X. Machines differ but share a lot; the game's own bindings are
-  also very configurable.
-- DialRing -> boom lateral felt intuitive but a bit too sensitive. LargeKnob
-  needed fast turning to register at all (top speed below FullScale 15, plus
-  the game's dead zone) -> per-knob calibration needed soon.
-- Steering returns to center only while the vehicle moves (game behaviour).
-  Driving wants stick Y -> Triggers (up = RT throttle, down = LT brake).
+## Planned features and decisions
+The project is general-purpose: keep game names out of this public repo.
+Craig's reference game and its notes are in CLAUDE.local.md (git-ignored, not
+published); his game-specific profiles go in profiles/local/ (also ignored).
+- Lessons from the first in-game session (2026-10-25): the game saw the pad and
+  showed Xbox prompts; remapping is configuration, the raw values are right.
+  Different machines in one game use different control schemes. One knob
+  needed fast turning to register at all (top speed below FullScale, plus the
+  game's dead zone) -> per-knob calibration needed soon. Driving wants
+  stick Y -> Triggers (up = RT throttle, down = LT brake).
 - Planned features (from Craig):
-  - Layers/modes in one profile (crane truck / stationary crane / harvester /
-    driving), switched by touch double-taps (down/left/right; up is XPPen's
+  - Layers/modes in one profile (e.g. one per machine type, plus driving),
+    switched by touch double-taps (down/left/right; up is XPPen's
     layer key). Could also cycle so we're not limited to 3. Needs a probe of
     what a double-tap reports.
   - Sticky buttons: single press = latch on, double press = off (per button).
-    Alternative/also: a knob that holds a button (e.g. LB Crane Control)
-    automatically while it is turning.
+    Alternative/also: a knob that holds a button (e.g. LB, when a game uses
+    a held shoulder button to select what the sticks control) while turning.
   - Knob "hold while turning" mode: hold button A while turning CW, B while
-    CCW, release when stopped - for digital game controls (D-pad boom
-    vertical / hook, LB/RB trolley). Reuses the Rate-mode turning detection.
+    CCW, release when stopped - for digital game controls (D-pad or LB/RB
+    driving a movement). Reuses the Rate-mode turning detection.
   - Import/export to share profiles. Keep JSON (nesting: profile > layers >
     controls; comments already allowed); INI is too flat. Add formatVersion.
     Split shareable GAME PROFILE from personal KNOB CALIBRATION (hand speed is
@@ -145,7 +142,7 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
   Add a per-knob recenter button (e.g. LargeKnobPress snaps the axis to 0),
   "ticks from center to full lock" instead of step size, and optional
   self-centering (off by default).
-- Roadcraft profile is a STARTER, untested in-game.
+- default.jsonc is a generic starter; per-game tuning happens in local profiles.
 
 ## What we know so far
 - Marketing and most app settings describe the joystick as 4/8-way digital.
@@ -176,7 +173,7 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
 
 ## Raw mode (decided 2026-10-25: the bridge owns ALL input, XPPen app closed)
 Reason: mixing keyboard (XPPen app keystrokes) and gamepad input would confuse
-Roadcraft's input-mode switching.
+a game's input-mode switching.
 - Send output report on if2: 02 B0 04 + 17 x 00 (report ID 0x02 + 19 bytes, the
   size the if2 descriptor declares). Same magic Linux hid-uclogic sends to UGEE v2
   / XP-Pen tablets (uclogic_ugee_v2_probe_arr). Device acks with input report
@@ -218,7 +215,7 @@ Roadcraft's input-mode switching.
 ## History
 - Phase 1 (2026-10-25): Python probe found the vendor interface, the stick
   format, then the raw-mode switch, knob and button layouts.
-- Phase 2 (2026-10-25): C# solution, mapping engine, starter Roadcraft profile.
+- Phase 2 (2026-10-25): C# solution, mapping engine, starter profile, first in-game test.
 - Later: GUI that edits profiles, with our OWN SVG drawing of the device (drawn
   from the shape/proportions of XPPen's render, not traced; no XPPen logo).
   Mock up layouts for Craig to compare before building. UI must be DPI-correct
