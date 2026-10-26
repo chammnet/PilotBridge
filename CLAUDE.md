@@ -86,6 +86,10 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
 - Top touch knob: Craig thinks it is designed for DOUBLE TAP (single taps were
   unreliable). Probe double taps to see what they report.
 - Hotkey to toggle the bridge; tray app; GUI profile editor.
+- Driving / steering-wheel mode (Craig, 2026-10-25): builds on Position mode.
+  Add a per-knob recenter button (e.g. LargeKnobPress snaps the axis to 0),
+  "ticks from center to full lock" instead of step size, and optional
+  self-centering (off by default).
 - Roadcraft profile is a STARTER, untested in-game.
 
 ## What we know so far
