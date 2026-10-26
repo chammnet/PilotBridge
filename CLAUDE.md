@@ -91,6 +91,21 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
     controls; comments already allowed); INI is too flat. Add formatVersion.
     Split shareable GAME PROFILE from personal KNOB CALIBRATION (hand speed is
     per user/device, not per game).
+- Architecture direction (Craig): composable BEHAVIORS per control instead of
+  one mode per knob, mixed and matched. E.g. LargeKnob = [rate -> RightY,
+  hold LB while active]; another knob = steering wheel; another = rate.
+  Hold-while-active must hold the button for the whole turning session and
+  release only after N seconds idle (game prompts change while LB is held,
+  so per-tick presses would flicker). Spec details before coding: delay,
+  what counts as active, interaction with a manual press of the same button.
+- Config editing will be done in the GUI; Craig dislikes hand-editing JSON.
+  Format decision pending (Craig to confirm): rename profiles to .jsonc so
+  editors accept the // comments (loader unchanged), and put human text in
+  real fields (name, game, description, author; per-layer description) since
+  GUI saves drop comments in any format. Considered: TOML (readable but
+  clumsy for deep nesting), YAML (indentation pitfalls), JSON5 (weak .NET
+  support), XML (verbose), "_key" comment keys (lost on GUI save unless the
+  model carries them).
 - 8BitDo: the name in joy.cpl comes from the OEM registry entry for
   VID_045E&PID_028E written by the 8BitDo Pro 2 setup on Craig's PC. ViGEm
   uses Microsoft's inbox Xbox 360 driver; no 8BitDo driver needed anywhere,
