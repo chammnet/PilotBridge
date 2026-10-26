@@ -69,13 +69,13 @@ public class MappingEngineTests
     public void KnobOnTriggers_ClockwiseIsRT_CounterClockwiseIsLT()
     {
         var settings = new KnobSettings { Mode = KnobMode.Position, Axis = GamepadAxis.Triggers, StepPerTick = 0.25 };
-        var engine = new MappingEngine(new Profile { Knobs = { [PilotKnob.OuterRing] = settings } });
+        var engine = new MappingEngine(new Profile { Knobs = { [PilotKnob.DialRing] = settings } });
 
-        engine.Handle(new KnobTick(PilotKnob.OuterRing, +1), 0);
+        engine.Handle(new KnobTick(PilotKnob.DialRing, +1), 0);
         var cw = engine.Update(0);
         Assert.Equal((0.0, 0.25), (cw.LeftTrigger, cw.RightTrigger));
 
-        for (var i = 0; i < 3; i++) engine.Handle(new KnobTick(PilotKnob.OuterRing, -1), 0);
+        for (var i = 0; i < 3; i++) engine.Handle(new KnobTick(PilotKnob.DialRing, -1), 0);
         var ccw = engine.Update(0);
         Assert.Equal((0.5, 0.0), (ccw.LeftTrigger, ccw.RightTrigger));
     }
@@ -86,10 +86,10 @@ public class MappingEngineTests
         var engine = new MappingEngine(new Profile
         {
             Stick = { Deadzone = 0 },
-            Knobs = { [PilotKnob.BigKnob] = new KnobSettings { Mode = KnobMode.Position, Axis = GamepadAxis.LeftX, StepPerTick = 0.5 } },
+            Knobs = { [PilotKnob.LargeKnob] = new KnobSettings { Mode = KnobMode.Position, Axis = GamepadAxis.LeftX, StepPerTick = 0.5 } },
         });
         engine.Handle(new StickReport(511, 0), 0);
-        engine.Handle(new KnobTick(PilotKnob.BigKnob, +1), 0);
+        engine.Handle(new KnobTick(PilotKnob.LargeKnob, +1), 0);
         Assert.Equal(1.0, engine.Update(0).LeftX);
     }
 
@@ -101,10 +101,10 @@ public class MappingEngineTests
             Mode = KnobMode.Buttons, Clockwise = GamepadButton.RightShoulder,
             CounterClockwise = GamepadButton.LeftShoulder, PulseMilliseconds = 40,
         };
-        var engine = new MappingEngine(new Profile { Knobs = { [PilotKnob.TopKnob] = settings } });
-        engine.Handle(new KnobTick(PilotKnob.TopKnob, +1), 0);
-        engine.Handle(new KnobTick(PilotKnob.TopKnob, +1), 0);
-        engine.Handle(new KnobTick(PilotKnob.TopKnob, -1), 0);
+        var engine = new MappingEngine(new Profile { Knobs = { [PilotKnob.SmallKnob] = settings } });
+        engine.Handle(new KnobTick(PilotKnob.SmallKnob, +1), 0);
+        engine.Handle(new KnobTick(PilotKnob.SmallKnob, +1), 0);
+        engine.Handle(new KnobTick(PilotKnob.SmallKnob, -1), 0);
 
         // Sample every 4 ms and count rising edges per button.
         var presses = new Dictionary<GamepadButton, int>();

@@ -6,7 +6,36 @@ using PilotBridge.Core;
 // Usage:
 //   PilotBridge.App [profile.json] [--monitor] [--seconds N]
 //   PilotBridge.App --list
+//   PilotBridge.App --calibrate [DialRing|LargeKnob|SmallKnob]
+//   PilotBridge.App --replay recording.csv <knob> [profile.json]
 // Default profile: profiles\roadcraft.json next to the exe.
+
+var defaultProfile = Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.json");
+
+PilotKnob? ParseKnob(string name)
+{
+    if (Enum.TryParse<PilotKnob>(name, ignoreCase: true, out var knob) && Enum.IsDefined(knob))
+        return knob;
+    Console.WriteLine($"Unknown knob '{name}'. Use DialRing, LargeKnob or SmallKnob.");
+    return null;
+}
+
+if (args.Length > 0 && args[0] == "--calibrate")
+{
+    var knob = ParseKnob(args.Length > 1 ? args[1] : nameof(PilotKnob.DialRing));
+    return knob is { } k ? Calibration.Run(k) : 1;
+}
+
+if (args.Length > 0 && args[0] == "--replay")
+{
+    if (args.Length < 3)
+    {
+        Console.WriteLine("Usage: --replay recording.csv <knob> [profile.json]");
+        return 1;
+    }
+    var knob = ParseKnob(args[2]);
+    return knob is { } k ? Replay.Run(args[1], k, args.Length > 3 ? args[3] : defaultProfile) : 1;
+}
 
 var monitor = args.Contains("--monitor");
 double? seconds = null;
@@ -26,7 +55,7 @@ if (args.Contains("--list"))
     return found.Count == 0 ? 1 : 0;
 }
 
-profilePath ??= Path.Combine(AppContext.BaseDirectory, "profiles", "roadcraft.json");
+profilePath ??= defaultProfile;
 Profile profile;
 try
 {

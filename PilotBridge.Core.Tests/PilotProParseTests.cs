@@ -18,10 +18,10 @@ public class PilotProParseTests
     }
 
     [Theory]
-    [InlineData("02 F3 02 01 01 01 00 00 00 00 00 00", PilotKnob.BigKnob, +1)]
-    [InlineData("02 F3 02 02 01 01 00 00 00 00 00 00", PilotKnob.BigKnob, -1)]
-    [InlineData("02 F3 02 01 04 01 00 00 00 00 00 00", PilotKnob.OuterRing, +1)]
-    [InlineData("02 F3 02 02 02 01 00 00 00 00 00 00", PilotKnob.TopKnob, -1)]
+    [InlineData("02 F3 02 01 01 01 00 00 00 00 00 00", PilotKnob.LargeKnob, +1)]
+    [InlineData("02 F3 02 02 01 01 00 00 00 00 00 00", PilotKnob.LargeKnob, -1)]
+    [InlineData("02 F3 02 01 04 01 00 00 00 00 00 00", PilotKnob.DialRing, +1)]
+    [InlineData("02 F3 02 02 02 01 00 00 00 00 00 00", PilotKnob.SmallKnob, -1)]
     public void Knob_Dir01IsClockwise(string hex, PilotKnob knob, int direction)
     {
         Assert.Equal(new KnobTick(knob, direction), PilotPro.Parse(Hex(hex)));
@@ -32,8 +32,8 @@ public class PilotProParseTests
     [InlineData("02 F3 03 01 00 80 00 00 00 00 00 00", PilotButton.Side3)]
     [InlineData("02 F3 03 01 00 04 00 00 00 00 00 00", PilotButton.Side8)]
     [InlineData("02 F3 03 01 00 00 02 00 00 00 00 00", PilotButton.DpadUp)]
-    [InlineData("02 F3 03 01 00 00 00 01 00 00 00 00", PilotButton.TopKnobPress)]
-    [InlineData("02 F3 03 01 20 00 00 00 00 00 00 00", PilotButton.BigKnobPress)]
+    [InlineData("02 F3 03 01 00 00 00 01 00 00 00 00", PilotButton.SmallKnobPress)]
+    [InlineData("02 F3 03 01 20 00 00 00 00 00 00 00", PilotButton.LargeKnobPress)]
     [InlineData("02 F3 03 01 08 00 00 00 00 00 00 00", PilotButton.TouchLeft)]
     [InlineData("02 F3 03 00 00 00 00 00 00 00 00 00", PilotButton.None)]   // release
     public void Buttons_OneBitPerControl(string hex, PilotButton expected)

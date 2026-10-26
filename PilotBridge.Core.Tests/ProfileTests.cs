@@ -14,8 +14,8 @@ public class ProfileTests
               "stick": { "x": { "axis": "RightY", "invert": true }, "deadzone": 0.12 },
               "buttons": { "Side1": "A", "DpadUp": "DPadUp" },
               "knobs": {
-                "OuterRing": { "mode": "Rate", "axis": "Triggers", "rampDownPerSecond": 1.5 },
-                "TopKnob": { "mode": "Buttons", "clockwise": "RightShoulder", "counterClockwise": "LeftShoulder" },
+                "DialRing": { "mode": "Rate", "axis": "Triggers", "rampDownPerSecond": 1.5 },
+                "SmallKnob": { "mode": "Buttons", "clockwise": "RightShoulder", "counterClockwise": "LeftShoulder" },
               },
             }
             """);
@@ -26,9 +26,9 @@ public class ProfileTests
         Assert.Equal(GamepadAxis.LeftY, p.Stick.Y.Axis);   // default kept
         Assert.Equal(0.12, p.Stick.Deadzone);
         Assert.Equal(GamepadButton.A, p.Buttons[PilotButton.Side1]);
-        Assert.Equal(1.5, p.Knobs[PilotKnob.OuterRing].RampDownPerSecond);
-        Assert.Equal(4.0, p.Knobs[PilotKnob.OuterRing].RampUpPerSecond);   // default kept
-        Assert.Equal(KnobMode.Buttons, p.Knobs[PilotKnob.TopKnob].Mode);
+        Assert.Equal(1.5, p.Knobs[PilotKnob.DialRing].RampDownPerSecond);
+        Assert.Equal(4.0, p.Knobs[PilotKnob.DialRing].RampUpPerSecond);   // default kept
+        Assert.Equal(KnobMode.Buttons, p.Knobs[PilotKnob.SmallKnob].Mode);
     }
 
     [Fact]

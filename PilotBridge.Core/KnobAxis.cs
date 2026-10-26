@@ -5,17 +5,30 @@ namespace PilotBridge.Core;
 /// Times are in seconds on any monotonic clock.
 /// </summary>
 /// <remarks>
-/// Rate mode estimates speed from the time between ticks rather than counting
-/// ticks in a window: steady turning then gives a steady value at any speed
-/// instead of a jump on every tick. Once a tick is overdue the estimate falls
-/// as 1/(time since last tick), so stopping glides down instead of cutting
-/// out. Ramp limits then cap how fast the output itself may change.
+/// Rate mode, tuned against recorded turning (logs/calibration-*.csv):
+/// 1. Speed = 1 / average of the last AverageIntervals gaps between ticks, so
+///    steady turning gives a steady value at any speed. Averaging an even
+///    number of gaps also cancels the quick-slow rhythm of a finger rolling
+///    the knob and re-positioning.
+/// 2. Grace: hands are uneven (gaps vary 40-60% even when "steady"), so the
+///    speed is held until a tick is clearly overdue - GraceFactor times the
+///    average gap - instead of sagging every time a tick is a little late.
+///    Once overdue, the target drops to 0 and RampDown sets how gently it stops.
+///    The run (and its average) only resets on a reversal or a gap longer than
+///    1 / MinTicksPerSecond.
+/// 3. The output is slew-limited (RampUp / RampDown), then smoothed with a
+///    time constant of SmoothingSeconds to take the edge off what's left.
 /// </remarks>
 internal sealed class KnobAxis
 {
+    // Below this the smoothed output is treated as stopped, so it settles on
+    // exactly 0 instead of creeping toward it forever.
+    private const double Settled = 0.001;
+
     private readonly KnobSettings _s;
     private readonly List<double> _ticks = new();
     private int _direction;
+    private double _slewed;
     private double _output;
     private double? _lastUpdate;
 
@@ -53,25 +66,34 @@ internal sealed class KnobAxis
         if (_ticks.Count == 0)
             return 0;
 
-        double rate;
-        if (_ticks.Count >= 2)
-            rate = (_ticks.Count - 1) / (_ticks[^1] - _ticks[0]);
-        else if (_s.IgnoreSingleTicks)
-            return 0;
-        else
-            rate = _s.MinTicksPerSecond;
-
-        // Overdue: the next tick would have arrived by now at this speed.
         var since = t - _ticks[^1];
-        if (since > 0)
-            rate = Math.Min(rate, 1 / since);
+        double rate;
+        bool overdue;
+        if (_ticks.Count >= 2)
+        {
+            var averageGap = (_ticks[^1] - _ticks[0]) / (_ticks.Count - 1);
+            rate = 1 / averageGap;
+            overdue = since > _s.GraceFactor * averageGap;
+        }
+        else if (_s.IgnoreSingleTicks)
+        {
+            return 0;
+        }
+        else
+        {
+            rate = _s.MinTicksPerSecond;
+            overdue = false;
+        }
 
-        if (rate < _s.MinTicksPerSecond)
+        if (since > 1 / _s.MinTicksPerSecond)
         {
             _ticks.Clear();
             return 0;
         }
-        return _direction * rate;
+        // Overdue only zeroes the target; the history is kept so that if the
+        // next tick does come, the average already includes this long gap.
+        // Wiping it would let the next quick pair of ticks read as a burst.
+        return overdue ? 0 : _direction * rate;
     }
 
     public double Update(double t)
@@ -87,7 +109,14 @@ internal sealed class KnobAxis
             * StickMapper.Shape(Math.Abs(rate) / _s.FullScaleTicksPerSecond, _s.Curve, _s.AntiDeadzone)
             * (_s.Invert ? -1 : 1);
 
-        _output = Slew(_output, target, dt);
+        _slewed = Slew(_slewed, target, dt);
+
+        if (_s.SmoothingSeconds > 0)
+            _output += (_slewed - _output) * (1 - Math.Exp(-dt / _s.SmoothingSeconds));
+        else
+            _output = _slewed;
+        if (_slewed == 0 && Math.Abs(_output) < Settled)
+            _output = 0;
         return _output;
     }
 

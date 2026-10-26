@@ -66,13 +66,19 @@ public sealed class KnobSettings
     public GamepadAxis Axis { get; set; } = GamepadAxis.None;
     public bool Invert { get; set; }
 
-    // Rate mode
+    // Rate mode. Defaults come from replaying recorded turning (2026-10-25):
+    // Craig's slow / medium / fast were about 1.6 / 4.7 / 15 ticks per second.
+    // Which of these a GUI exposes is still to be decided.
     /// <summary>Turning this fast (ticks per second) gives full deflection.</summary>
-    public double FullScaleTicksPerSecond { get; set; } = 10;
+    public double FullScaleTicksPerSecond { get; set; } = 15;
     /// <summary>Slower than this counts as stopped.</summary>
     public double MinTicksPerSecond { get; set; } = 0.75;
-    /// <summary>Speed is averaged over this many recent tick intervals.</summary>
-    public int AverageIntervals { get; set; } = 2;
+    /// <summary>Speed is averaged over this many recent gaps between ticks.</summary>
+    public int AverageIntervals { get; set; } = 4;
+    /// <summary>Keep the speed until a tick is this many average gaps late, then stop.</summary>
+    public double GraceFactor { get; set; } = 2.5;
+    /// <summary>Output smoothing time constant; 0 = none.</summary>
+    public double SmoothingSeconds { get; set; } = 0.25;
     /// <summary>Wait for a second tick before moving (filters stray ticks).</summary>
     public bool IgnoreSingleTicks { get; set; }
     public double Curve { get; set; } = 1.0;

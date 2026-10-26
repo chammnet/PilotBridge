@@ -43,16 +43,35 @@ self-contained exe (no Python/.NET install for users) with a real Windows GUI la
   (one bipolar axis: + = RT, - = LT).
 - Buttons/d-pad/knob presses/touch -> any gamepad button.
 - Knobs: Rate | Position | Buttons.
-  - Rate: speed = 1 / (average of last AverageIntervals tick intervals), so steady
-    turning gives a steady value at any speed (no per-tick sawtooth). When a tick
-    is overdue, speed = min(speed, 1/time-since-last-tick) -> glides down; below
-    MinTicksPerSecond -> 0. First tick of a run = MinTicksPerSecond (or nothing
-    with IgnoreSingleTicks). A reversal starts a new run. Output = shaped
-    speed/FullScale, then slew-limited: RampUp while growing, RampDown while
-    shrinking; a sign reversal returns to 0 at RampDown first.
+  - Rate (tuned 2026-10-25 by replaying Craig's recorded turning):
+    speed = 1 / average of the last AverageIntervals (4) tick gaps. Steady
+    turning -> steady value; averaging an even number of gaps cancels the
+    quick-slow rhythm of rolling the knob then re-positioning a finger.
+    Grace: hold the speed until a tick is GraceFactor (2.5) average gaps late,
+    then target 0 (RampDown sets how gently it stops). Overdue does NOT wipe
+    the run's history (that bug made the next quick pair read as a burst); a
+    run only resets on reversal or a gap > 1/MinTicksPerSecond. First tick of
+    a run = MinTicksPerSecond (or nothing with IgnoreSingleTicks). Output =
+    shaped speed / FullScale (15), slew-limited (RampUp while growing,
+    RampDown while shrinking; a sign reversal returns to 0 at RampDown first),
+    then exponential smoothing (SmoothingSeconds 0.25), snapped to 0 below 0.001.
   - Position: each tick +/- StepPerTick, stays (triggers clamp at 0..1).
   - Buttons: each tick = one tap (hold PulseMs, release PulseMs), queue max 10.
 - antiDeadzone exists because games ignore small stick values; tune in-game.
+- All settings live in KnobSettings / StickSettings and can be set from the
+  profile. Which ones a GUI exposes is undecided (Craig suspects ramp-down
+  may not make sense to expose).
+
+## Calibration data (Craig, LargeKnob, 2026-10-25)
+- `--calibrate <knob>` records tick timestamps at 5 self-judged speeds to
+  logs/calibration-*.csv; `--replay <csv> <knob> [profile]` scores a profile's
+  Rate settings on it (output, bounce, time to speed, time to stop).
+- Craig's speeds: slow 1.6, medium-slow 3.4, medium 4.7, medium-fast 10.8,
+  fast 14.9 ticks/s. Gaps vary 36-66% even when "steady"; fast has re-grip
+  pauses (the knob tilts around the stick and slips if spun jog-style), so
+  fast will always be uneven. Medium-fast was jog-style and steadiest.
+- Bounce, old engine (avg 2, decay as soon as a tick is late) vs current:
+  medium 36% -> 18%, medium-fast 30% -> 19%, fast 42% -> 28%.
 
 ## Not done yet / ideas
 - 8-way digital stick mode with threshold (Craig wants it).
@@ -101,13 +120,14 @@ Roadcraft's input-mode switching.
 - Works whether or not the XPPen app is running (app does not open exclusively).
 - After raw mode, every knob tick and every button arrives on if2:
   - Knob:   02 F3 02 <dir> <id> 01 ...   one report per tick.
-      id: 01 = big knob, 04 = outer ring, 02 = top small knob
+      id: 01 = LargeKnob, 02 = SmallKnob, 04 = DialRing (Craig's names, used in
+      code and profiles; earlier notes said big knob / top small knob / outer ring)
       dir: 01 = CW, 02 = CCW (confirmed: CW-only test on big + top knob).
   - Button: 02 F3 03 <01 down|00 up> b4 b5 b6 b7 ...   one bit per control:
       b5: btn1=10 btn2=20 btn3=80 btn4=40 btn5=01 btn6=02 btn7=08 btn8=04
       b6: d-pad up=02 down=08 left=01 right=04
-      b7: top knob press=01
-      b4: big knob press=20, big knob center button=10,
+      b7: small knob press=01
+      b4: large knob press=20, large knob center button=10,
           top touch up=01 down=02 left=08 right=04 (from the clean run)
     (Side button numbers refer to Craig's labeled diagram.)
 - 02 B4 05 01 02 xx reports, four at a time (xx cycles 01 02 08 04 = the touch

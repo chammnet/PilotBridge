@@ -6,6 +6,11 @@ public class KnobAxisTests
 {
     private const double Dt = 0.004;   // a 250 Hz update loop
 
+    /// <summary>
+    /// Round numbers so expected values are easy to check by hand. Smoothing
+    /// is off here so each test sees the estimator and ramps directly; the
+    /// smoothing tests turn it on.
+    /// </summary>
     private static KnobSettings Rate(Action<KnobSettings>? tweak = null)
     {
         var s = new KnobSettings
@@ -14,7 +19,9 @@ public class KnobAxisTests
             Axis = GamepadAxis.RightX,
             FullScaleTicksPerSecond = 10,
             MinTicksPerSecond = 0.75,
-            AverageIntervals = 2,
+            AverageIntervals = 4,
+            GraceFactor = 2.5,
+            SmoothingSeconds = 0,
             RampUpPerSecond = 4,
             RampDownPerSecond = 2,
         };
@@ -78,9 +85,56 @@ public class KnobAxisTests
             Assert.True(after[i].Out <= after[i - 1].Out + 1e-12);
             Assert.True(after[i - 1].Out - after[i].Out <= 2 * Dt + 1e-9);   // RampDown
         }
-        // Holds speed until the next tick is overdue (one interval), then falls.
-        Assert.Equal(0.4, after.First(p => p.T > 2.2).Out, 6);
+        // Holds speed through the grace period (2.5 gaps = 0.625 s), then falls.
+        Assert.Equal(0.4, after.First(p => p.T > 2.6).Out, 6);
+        Assert.True(after.First(p => p.T > 2.75).Out < 0.4);
         Assert.Equal(0.0, after.Last().Out);
+    }
+
+    [Fact]
+    public void UnevenTurning_QuickSlowRhythm_HoldsSteady()
+    {
+        // Craig's recorded "medium": pairs of ticks ~100 ms apart, then ~350 ms
+        // gaps. Averaging 4 gaps spans two whole pairs, and the grace period
+        // keeps the long gaps from counting as slowing down.
+        var ticks = new List<(double, int)>();
+        for (var t = 0.0; t < 6; t += 0.45) { ticks.Add((t, +1)); ticks.Add((t + 0.1, +1)); }
+        var trace = Run(new KnobAxis(Rate()), 0, 6, ticks.ToArray());
+
+        var steady = trace.Where(p => p.T is > 2 and < 5.9).Select(p => p.Out).ToList();
+        var expected = (1 / 0.225) / 10;   // 4.44 ticks/s of 10 full scale
+        Assert.All(steady, v => Assert.Equal(expected, v, 3));
+    }
+
+    [Fact]
+    public void UnevenTurning_WithoutGrace_WouldSag()
+    {
+        // The same rhythm with no grace shows what the grace period is for.
+        var ticks = new List<(double, int)>();
+        for (var t = 0.0; t < 6; t += 0.45) { ticks.Add((t, +1)); ticks.Add((t + 0.1, +1)); }
+        var trace = Run(new KnobAxis(Rate(s => s.GraceFactor = 1.0)), 0, 6, ticks.ToArray());
+        Assert.Contains(trace, p => p.T is > 2 and < 5.9 && p.Out < 0.3);
+    }
+
+    [Fact]
+    public void Smoothing_SoftensSteps_ButArrivesAtTheSameValue()
+    {
+        var raw = Run(new KnobAxis(Rate()), 0, 3, Steady(0, 4, 13));
+        var smooth = Run(new KnobAxis(Rate(s => s.SmoothingSeconds = 0.25)), 0, 3, Steady(0, 4, 13));
+
+        // Lags behind while starting...
+        var early = smooth.First(p => p.T > 0.9).Out;
+        Assert.True(early < raw.First(p => p.T > 0.9).Out);
+        // ...but settles on the same value.
+        Assert.Equal(0.4, smooth.Last(p => p.T < 2.9).Out, 3);
+    }
+
+    [Fact]
+    public void Smoothing_StillComesToExactlyZero()
+    {
+        var axis = new KnobAxis(Rate(s => s.SmoothingSeconds = 0.25));
+        var trace = Run(axis, 0, 6, Steady(0, 4, 9));
+        Assert.Equal(0.0, trace.Last().Out);
     }
 
     [Fact]

@@ -27,41 +27,40 @@
     "DpadDown": "DPadDown",
     "DpadLeft": "DPadLeft",
     "DpadRight": "DPadRight",
-    "BigKnobPress": "LeftThumb",
-    "TopKnobPress": "RightThumb"
+    "LargeKnobPress": "LeftThumb",
+    "SmallKnobPress": "RightThumb"
   },
 
   "knobs": {
-    // Turning speed -> right stick; glides to a stop.
-    "OuterRing": {
+    // Rate mode: turning speed drives the axis; it glides to a stop.
+    // Every Rate setting is shown here with its default; the other knobs
+    // leave them out and get the same defaults.
+    "DialRing": {
       "mode": "Rate",
       "axis": "RightX",
-      "fullScaleTicksPerSecond": 10,
-      "minTicksPerSecond": 0.75,
-      "averageIntervals": 2,
-      "ignoreSingleTicks": false,
+      "invert": false,
+      "fullScaleTicksPerSecond": 15,  // turning this fast = full deflection
+      "minTicksPerSecond": 0.75,      // slower than this = stopped
+      "averageIntervals": 4,          // speed averaged over this many gaps
+      "graceFactor": 2.5,             // hold speed until a tick is this many gaps late
+      "smoothingSeconds": 0.25,       // output smoothing; 0 = none
+      "ignoreSingleTicks": false,     // true = a lone stray tick does nothing
       "curve": 1.0,
       "antiDeadzone": 0.0,
       "rampUpPerSecond": 4.0,
       "rampDownPerSecond": 2.0
     },
-    "BigKnob": {
+    "LargeKnob": {
       "mode": "Rate",
-      "axis": "RightY",
-      "fullScaleTicksPerSecond": 10,
-      "rampUpPerSecond": 4.0,
-      "rampDownPerSecond": 2.0
+      "axis": "RightY"
     },
-    // Turning speed -> triggers: clockwise sweeps RT, counter-clockwise LT.
+    // Triggers: clockwise sweeps RT, counter-clockwise LT.
     // (joy.cpl shows both triggers as one "Z axis"; games see them separately.)
     // For taps instead: "mode": "Buttons", "clockwise": "RightShoulder",
     // "counterClockwise": "LeftShoulder", "pulseMilliseconds": 40
-    "TopKnob": {
+    "SmallKnob": {
       "mode": "Rate",
-      "axis": "Triggers",
-      "fullScaleTicksPerSecond": 10,
-      "rampUpPerSecond": 4.0,
-      "rampDownPerSecond": 2.0
+      "axis": "Triggers"
     }
   }
 }

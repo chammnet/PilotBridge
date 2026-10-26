@@ -68,9 +68,9 @@ public static class PilotPro
 
 public enum PilotKnob : byte
 {
-    BigKnob = 0x01,
-    TopKnob = 0x02,
-    OuterRing = 0x04,
+    LargeKnob = 0x01,
+    SmallKnob = 0x02,
+    DialRing = 0x04,
 }
 
 /// <summary>
@@ -86,8 +86,8 @@ public enum PilotButton : uint
     TouchDown = 0x02u,
     TouchRight = 0x04u,
     TouchLeft = 0x08u,
-    BigKnobCenter = 0x10u,
-    BigKnobPress = 0x20u,
+    LargeKnobCenter = 0x10u,
+    LargeKnobPress = 0x20u,
 
     Side5 = 0x01u << 8,
     Side6 = 0x02u << 8,
@@ -103,7 +103,7 @@ public enum PilotButton : uint
     DpadRight = 0x04u << 16,
     DpadDown = 0x08u << 16,
 
-    TopKnobPress = 0x01u << 24,
+    SmallKnobPress = 0x01u << 24,
 }
 
 public abstract record PilotReport;
